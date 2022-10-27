@@ -39,7 +39,10 @@ object DeviceScanCompose {
             itemsIndexed(scanResults.keys.toList()) { _, key ->
                 Column {
                     Column(
-                        modifier = Modifier
+                        modifier = Modifier.clickable {
+                            val device: BluetoothDevice? = scanResults.get(key = key)
+                            onClick(device)
+                        }
                             .background(Color.LightGray, shape = RoundedCornerShape(10.dp))
                             .fillMaxWidth()
                             .border(1.dp, Color.Black, shape = RoundedCornerShape(10.dp))
@@ -47,17 +50,10 @@ object DeviceScanCompose {
                     ) {
                         Text(
                             text = scanResults[key]?.name ?: "Unknown Device",
-                            modifier = Modifier.clickable {
-                                val device: BluetoothDevice? = scanResults.get(key = key)
-                                onClick(device)
-                            })
+                            )
                         Spacer(modifier = Modifier.size(10.dp))
                         Text(
                             text = scanResults[key]?.address ?: "",
-                            modifier = Modifier.clickable {
-                                val device: BluetoothDevice? = scanResults.get(key = key)
-                                onClick(device)
-                            },
                             fontWeight = FontWeight.Light
                         )
                     }
