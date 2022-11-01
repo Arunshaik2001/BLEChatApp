@@ -1,7 +1,6 @@
 package com.example.learningble
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -19,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
 import com.example.learningble.bluetooth.ChatServer
 import com.example.learningble.presentation.ChatCompose
 import com.example.learningble.presentation.DeviceScanCompose
@@ -43,8 +41,8 @@ class MainActivity : ComponentActivity() {
         ChatServer.stopServer()
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onStart() {
+        super.onStart()
         Dexter.withContext(this)
             .withPermissions(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -52,19 +50,7 @@ class MainActivity : ComponentActivity() {
             )
             .withListener(object : MultiplePermissionsListener {
                 override fun onPermissionsChecked(report: MultiplePermissionsReport) {
-                    if (ActivityCompat.checkSelfPermission(
-                            this@MainActivity,
-                            Manifest.permission.BLUETOOTH_SCAN
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        return
-                    }
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Permission ${report.areAllPermissionsGranted()}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    ChatServer.startServer(application, this@MainActivity)
+                    ChatServer.startServer(application, activity = this@MainActivity)
                     viewModel.startScan()
                 }
 
