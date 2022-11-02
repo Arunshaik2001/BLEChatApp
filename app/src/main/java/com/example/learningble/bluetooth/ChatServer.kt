@@ -20,7 +20,7 @@ import com.example.learningble.states.DeviceConnectionState
 import com.example.learningble.utils.MESSAGE_UUID
 import com.example.learningble.utils.SERVICE_UUID
 
-private const val TAG = "ChatServer"
+private const val TAG = "ChatServerTAG"
 
 object ChatServer {
 
@@ -53,29 +53,11 @@ object ChatServer {
     private var gatt: BluetoothGatt? = null
     private var messageCharacteristic: BluetoothGattCharacteristic? = null
 
-    fun startServer(app: Application, activity: ComponentActivity) {
+    fun startServer(app: Application) {
         bluetoothManager = app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         adapter = bluetoothManager.adapter
-        if (!adapter.isEnabled) {
-            val takeResultListener =
-                activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-
-                    if (result.resultCode == -1) {
-                        Toast.makeText(activity, "Bluetooth ON", Toast.LENGTH_LONG).show()
-                        setupGattServer(app)
-                        startAdvertisement()
-                    } else {
-                        Toast.makeText(activity, "Bluetooth OFF", Toast.LENGTH_LONG).show()
-                    }
-                }
-
-            val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            takeResultListener.launch(intent)
-
-        } else {
-            setupGattServer(app)
-            startAdvertisement()
-        }
+        setupGattServer(app)
+        startAdvertisement()
     }
 
     fun stopServer() {
@@ -111,7 +93,8 @@ object ChatServer {
     }
 
 
-    private fun setupGattServer(app: Application) {
+    fun setupGattServer(app: Application) {
+        Log.i(TAG,"setupGattServer")
         gattServerCallback = GattServerCallback()
 
         gattServer = bluetoothManager.openGattServer(
@@ -134,7 +117,7 @@ object ChatServer {
         return service
     }
 
-    private fun startAdvertisement() {
+    fun startAdvertisement() {
         advertiser = adapter.bluetoothLeAdvertiser
 
         if (advertiseCallback == null) {
@@ -146,7 +129,8 @@ object ChatServer {
 
     private fun stopAdvertising() {
         Log.d(TAG, "Stopping Advertising with advertiser $advertiser")
-        advertiser?.stopAdvertising(advertiseCallback)
+        if(advertiseCallback != null)
+            advertiser?.stopAdvertising(advertiseCallback)
         advertiseCallback = null
     }
 
@@ -223,7 +207,8 @@ object ChatServer {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 gatt = discoveredGatt
                 val service = discoveredGatt.getService(SERVICE_UUID)
-                messageCharacteristic = service.getCharacteristic(MESSAGE_UUID)
+                if(service != null)
+                    messageCharacteristic = service.getCharacteristic(MESSAGE_UUID)
             }
         }
     }

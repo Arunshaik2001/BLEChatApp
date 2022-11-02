@@ -1,13 +1,15 @@
 package com.example.learningble
 
 import android.Manifest
-import android.os.Build
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -30,7 +32,7 @@ import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 
-private const val TAG = "MainActivity"
+private const val TAG = "MainActivityTAG"
 
 class MainActivity : ComponentActivity() {
 
@@ -41,36 +43,52 @@ class MainActivity : ComponentActivity() {
         ChatServer.stopServer()
     }
 
-    override fun onStart() {
-        super.onStart()
-        Dexter.withContext(this)
-            .withPermissions(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            .withListener(object : MultiplePermissionsListener {
-                override fun onPermissionsChecked(report: MultiplePermissionsReport) {
-                    ChatServer.startServer(application, activity = this@MainActivity)
-                    viewModel.startScan()
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permissions: List<PermissionRequest?>?,
-                    token: PermissionToken?
-                ) {
-
-                }
-            })
-            .check()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         setContent {
             LearningBLETheme {
-                
+                val result = remember { mutableStateOf<Int?>(100) }
+                val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                    result.value = it.resultCode
+                }
+
+                LaunchedEffect(key1 = true){
+
+                    Dexter.withContext(this@MainActivity)
+                        .withPermissions(
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.BLUETOOTH_ADVERTISE,
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.BLUETOOTH_SCAN,
+                            Manifest.permission.BLUETOOTH,
+                            Manifest.permission.BLUETOOTH_ADMIN,
+                        )
+                        .withListener(object : MultiplePermissionsListener {
+                            override fun onPermissionsChecked(report: MultiplePermissionsReport) {
+                                val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                                launcher.launch(intent)
+                            }
+
+                            override fun onPermissionRationaleShouldBeShown(
+                                permissions: List<PermissionRequest?>?,
+                                token: PermissionToken?
+                            ) {
+
+                            }
+                        })
+                        .check()
+
+                }
+
+                LaunchedEffect(key1 = result.value){
+                    if(result.value == RESULT_OK){
+                        ChatServer.startServer(application)
+                        viewModel.startScan()
+                    }
+                }
+
                 Scaffold(topBar = {
                     TopAppBar(
                         title = {
@@ -114,10 +132,9 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
 
-                            } else if(deviceScanningState != null && deviceConnectionState is DeviceConnectionState.Connected) {
+                            } else if (deviceScanningState != null && deviceConnectionState is DeviceConnectionState.Connected) {
                                 ChatCompose.Chats((deviceConnectionState as DeviceConnectionState.Connected).device.name)
-                            }
-                            else{
+                            } else {
                                 Text(text = "Nothing")
                             }
                         }
@@ -125,5 +142,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
 }
