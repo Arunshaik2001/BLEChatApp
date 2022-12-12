@@ -1,5 +1,5 @@
 # BLEChatApp
-created chat app with bluetooth low energy apis
+Created chat app with bluetooth low energy apis
 
 
 
