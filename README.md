@@ -1,5 +1,6 @@
 # BLEChatApp
-Created chat app with bluetooth low energy apis. You can chat with peers using Bluetooth. 
+Created chat app with bluetooth low energy apis. 
+You can chat with peers using Bluetooth. 
 
 
 # Demo:
